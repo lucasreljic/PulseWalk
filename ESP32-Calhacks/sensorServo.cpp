@@ -3,32 +3,6 @@
 #define SERVOMIN  125 // Minimum pulse length count (out of 4096)
 #define SERVOMAX  575 // Maximum pulse length count (out of 4096)
 #define WINDOW_SIZE 10
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #define UPPER_LIMIT 800
 class SensorHaptic {
     private:
@@ -98,7 +72,7 @@ class SensorHaptic {
         void update(bool isVibration = 0){
             int distance = getMovingAvg(readSensor());
             Serial.print("distance:");
-            Serial.println(distance);
+            Serial.print(distance);
             Serial.print("pin:");
             int  value = map(distance, minDistance, maxDistance, (direction ==1) ? minValue: maxValue, (direction ==1) ? maxValue: minValue);
             value = (value < minValue) ? minValue: (value > maxValue) ? maxValue: value;
@@ -107,7 +81,13 @@ class SensorHaptic {
             Serial.print("value:");
             Serial.println(value);
             if (isVibration){
-                analogWrite(hapticPin,value);
+                Serial.print("hapticvalue:");
+                Serial.println(value);
+                if (value < minValue + 1) {
+                  value = 0;
+                }
+                analogWrite(hapticPin, value);
+
                 return;
             }
             int pulse = angleToPulse(value);

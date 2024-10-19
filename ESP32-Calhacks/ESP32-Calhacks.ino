@@ -15,9 +15,11 @@ int servoArchMin = 90;
 
 int servoArchMax = 120;
 
-SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 90, 120, 0, 100, 1);
+SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 90, 120, 0, 40, 1);
+SensorHaptic hapticHeel = SensorHaptic(15, 32, NULL, 135, 255, 40, 100, 1);
 SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, 0, 50, -1);
-SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, 0, 100, 1);
+SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, 0, 40, 1);
+SensorHaptic hapticArch = SensorHaptic(4, 33, NULL, 130, 255, 40, 200, 1);
 
 
 void setup() {
@@ -32,6 +34,7 @@ void setup() {
   // calibrate sensorServos
   servoHeel.calibrate();
   servoArch.calibrate();
+  hapticHeel.calibrate();
   
 }
 void loop() {
@@ -53,6 +56,7 @@ void loop() {
   servoHeel.update();
   servoToe.update();
   servoArch.update();
+  hapticHeel.update(true);
   
   delay(100);  // Short delay to avoid flooding the serial output
 }
