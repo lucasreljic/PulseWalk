@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 #include "BluetoothSerial.h" // Bluetooth Serial library for ESP32
-
+#include "sensorServo.cpp"
 BluetoothSerial SerialBT;     // Create a Bluetooth Serial object
 
 Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
@@ -9,15 +9,15 @@ Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
 #define SERVOMIN  125 // Minimum pulse length count (out of 4096)
 #define SERVOMAX  575 // Maximum pulse length count (out of 4096)
 
-int servoToe = 0;
 
-
-int servoHeel = 0;
-int servoArch = 0;
 
 int servoArchMin = 90;
 
 int servoArchMax = 120;
+
+SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 0, 90, 90, 120, 1);
+SensorHaptic servoToe = SensorHaptic(2, 1, &board, 0, 90, 90, 120, 1);
+SensorHaptic servoArch = SensorHaptic(4, 2, &board, 0, 90, 90, 120, 1);
 
 
 void setup() {
@@ -27,6 +27,13 @@ void setup() {
 
   board.begin();
   board.setPWMFreq(60); // Set the frequency to 60 Hz for the servos
+
+
+  // calibrate sensorServos
+  servoHeel.calibrate();
+  servoToe.calibrate();
+  servoArch.calibrate();
+  
 }
 void loop() {
   // Check if data is available from the Bluetooth client
@@ -36,14 +43,18 @@ void loop() {
       // Serial.println("Received: " + received);
     }
   }
-  float volts = analogRead(2) * 0.0008056640625; // value from sensor * (3.3/4096)
-  int distance_cm = 29.988 * pow( volts, -1.173);
-  if (distance_cm < 90){
-    int ang;
-    int ang = map(ang, 0, 180, servoArchMin, servoArchMax);
-    int pulse = angleToPulse(ang);
-    board.setPWM(servoToe, 0, pulse);
-  }
+  // float volts = analogRead(2) * 0.0008056640625; // value from sensor * (3.3/4096)
+  // int distance_cm = 29.988 * pow( volts, -1.173);
+  // if (distance_cm < 90){
+  //   int ang = 0;
+  //   ang = map(ang, 0, 180, servoArchMin, servoArchMax);
+  //   int pulse = angleToPulse(ang);
+  //   board.setPWM(servoToe, 0, pulse);
+  // }
+  servoHeel.update();
+  servoToe.update();
+  servoArch.update();
+  
   delay(100);  // Short delay to avoid flooding the serial output
 }
 int angleToPulse(int ang) {
