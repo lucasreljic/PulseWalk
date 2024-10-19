@@ -1,0 +1,214 @@
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TextInput, Button, Text, ScrollView, Alert } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
+import * as Location from 'expo-location';
+import axios from 'axios'; // Use Axios for sending data
+import { ThemedView } from '@/components/ThemedView';
+
+// Replace with your actual Google Maps API key
+const GOOGLE_MAPS_APIKEY = 'AIzaSyArJHVcOUTGnya6ADZwv5ZNqa-cORKW2Zw';  
+
+const App = () => {
+  const [location, setLocation] = useState(null);
+  const [destination, setDestination] = useState('');
+  const [destinationCoords, setDestinationCoords] = useState(null);
+  const [steps, setSteps] = useState([]); 
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [region, setRegion] = useState({
+    latitude: 37.78825,
+    longitude: -122.4324,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permission to access location was denied');
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location.coords);
+      setRegion({
+        ...region,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
+
+  const handleDestinationChange = async () => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${destination}&key=${GOOGLE_MAPS_APIKEY}`
+      );
+      const data = await response.json();
+      const location = data.results[0].geometry.location;
+      setDestinationCoords({
+        latitude: location.lat,
+        longitude: location.lng,
+      });
+
+      const directionsResponse = await fetch(
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${region.latitude},${region.longitude}&destination=${location.lat},${location.lng}&mode=walking&key=${GOOGLE_MAPS_APIKEY}`
+      );
+      const directionsData = await directionsResponse.json();
+      const routeSteps = directionsData.routes[0].legs[0].steps;
+      setSteps(routeSteps);
+      setCurrentStepIndex(0); // Reset to the first step
+
+      sendToDevice(routeSteps[0]); // Send the first step to the external device
+    } catch (error) {
+      console.log('Error fetching directions:', error);
+    }
+  };
+
+  // Function to send the current step to an external device (simulated)
+  const sendToDevice = async (step) => {
+    try {
+      // Simulate sending the step data (you can replace this with actual hardware logic)
+      const stepData = {
+        instructions: step.html_instructions.replace(/<[^>]+>/g, ''), // Remove HTML tags
+        distance: step.distance.text,
+      };
+
+      // Simulate sending data to an external device or server
+      await axios.post('https://your-server.com/device-endpoint', stepData);
+
+      Alert.alert('Step Sent', `Sent: ${stepData.instructions}`);
+    } catch (error) {
+      console.error('Error sending to device:', error);
+    }
+  };
+
+  useEffect(() => {
+    const locationInterval = setInterval(async () => {
+      if (steps.length > 0 && location) {
+        const userLocation = await Location.getCurrentPositionAsync({});
+        const userCoords = {
+          latitude: userLocation.coords.latitude,
+          longitude: userLocation.coords.longitude,
+        };
+
+        if (currentStepIndex < steps.length) {
+          const nextStep = steps[currentStepIndex];
+          const nextStepLocation = {
+            latitude: nextStep.end_location.lat,
+            longitude: nextStep.end_location.lng,
+          };
+
+          const distance = getDistance(userCoords, nextStepLocation);
+
+          if (distance < 50) {
+            const newIndex = currentStepIndex + 1;
+            setCurrentStepIndex(newIndex);
+            sendToDevice(steps[newIndex]); // Send the next step to the external device
+          }
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(locationInterval);
+  }, [location, steps, currentStepIndex]);
+
+  const getDistance = (coords1, coords2) => {
+    const toRad = (value) => (value * Math.PI) / 180;
+    const R = 6371; 
+    const dLat = toRad(coords2.latitude - coords1.latitude);
+    const dLon = toRad(coords2.longitude - coords1.longitude);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(coords1.latitude)) *
+        Math.cos(toRad(coords2.latitude)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c * 1000; // Distance in meters
+  };
+
+  return (
+    <View style={styles.container}>
+      {location && (
+        <MapView
+          style={styles.map}
+          region={region}
+          showsUserLocation={true}
+        >
+        {destinationCoords && (
+          <>
+          <Marker coordinate={destinationCoords} />
+            <MapViewDirections
+              origin={{ latitude: location.latitude, longitude: location.longitude }}
+              destination={destinationCoords}
+              apikey={GOOGLE_MAPS_APIKEY}
+              strokeWidth={4}
+              strokeColor="blue"
+            />
+          </>
+        )}
+        </MapView>
+      )}
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter destination"
+          value={destination}
+          onChangeText={setDestination}
+        />
+       <Button title="Get Directions" onPress={handleDestinationChange} />
+      </View>
+
+      {/* Display the next step */}
+      {steps.length > 0 && currentStepIndex < steps.length && (
+        <View style={styles.directionContainer}>
+          <Text style={styles.directionText}>
+            {steps[currentStepIndex].html_instructions.replace(/<[^>]+>/g, '')} - {steps[currentStepIndex].distance.text}
+          </Text>
+        </View>
+      )}
+    </View>
+    // <ThemedView></ThemedView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  inputContainer: {
+    position: 'absolute',
+    top: 50,
+    left: 10,
+    right: 10,
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 8,
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  directionContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 8,
+  },
+  directionText: {
+    fontSize: 16,
+  },
+});
+
+export default App;
