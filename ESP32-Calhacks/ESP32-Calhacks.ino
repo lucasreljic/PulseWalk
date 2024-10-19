@@ -15,9 +15,9 @@ int servoArchMin = 90;
 
 int servoArchMax = 120;
 
-SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 0, 90, 90, 120, 1);
-SensorHaptic servoToe = SensorHaptic(2, 1, &board, 0, 90, 90, 120, 1);
-SensorHaptic servoArch = SensorHaptic(4, 2, &board, 0, 90, 90, 120, 1);
+SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 90, 120, 0, 100, 1);
+SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, 0, 50, -1);
+SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, 0, 100, 1);
 
 
 void setup() {
@@ -31,7 +31,6 @@ void setup() {
 
   // calibrate sensorServos
   servoHeel.calibrate();
-  servoToe.calibrate();
   servoArch.calibrate();
   
 }
