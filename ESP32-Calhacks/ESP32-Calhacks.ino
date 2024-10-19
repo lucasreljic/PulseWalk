@@ -1,73 +1,62 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
+#include "BluetoothSerial.h" // Bluetooth Serial library for ESP32
 
-#ifndef APSSID
-#define APSSID "ESPap"
-#define APPSK "thereisnospoon"
-#endif
+BluetoothSerial SerialBT;     // Create a Bluetooth Serial object
 
-/* Set these to your desired credentials. */
-const char *ssid = APSSID;
-const char *password = APPSK;
-
-ESP8266WebServer server(80);
 Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
-#define SERVOMIN  125 // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  575 // this is the 'maximum' pulse length count (out of 4096)
 
-int servoNum = 0;
+#define SERVOMIN  125 // Minimum pulse length count (out of 4096)
+#define SERVOMAX  575 // Maximum pulse length count (out of 4096)
 
-void handleRoot() {
-  server.send(200, "text/html", "<h1>You are connected. Use /servo?angle=<value> to set the servo angle.</h1>");
-}
+int servoToe = 0;
 
-// Handler to set the servo angle based on input from the HTTP request
-void handleServo() {
-  if (server.hasArg("angle")) {
-    String angleStr = server.arg("angle");
-    int angle = angleStr.toInt();
-    
-    if (angle >= 0 && angle <= 180) {
-      int pulse = angleToPulse(angle);
-      board.setPWM(servoNum, 0, pulse);
-      String response = "Servo angle set to: " + String(angle);
-      server.send(200, "text/html", response);
-    } else {
-      server.send(400, "text/html", "Invalid angle. Please provide a value between 0 and 180.");
-    }
-  } else {
-    server.send(400, "text/html", "Please provide an angle using /servo?angle=<value>");
-  }
-}
+
+int servoHeel = 0;
+int servoArch = 0;
+
+int servoArchMin = 90;
+
+int servoArchMax = 120;
+
 
 void setup() {
-  delay(1000);
   Serial.begin(115200);
-  Serial.println();
-  Serial.print("Configuring access point...");
-  WiFi.softAP(ssid, password);
-
-  IPAddress myIP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(myIP);
-  
-  server.on("/", handleRoot);
-  server.on("/servo", handleServo); // Add endpoint to set the servo angle
-  
-  server.begin();
-  Serial.println("HTTP server started");
+  SerialBT.begin("ESP32_ServoControl"); // Bluetooth name you will see when connecting
+  Serial.println("Bluetooth device is ready to pair");
 
   board.begin();
-  board.setPWMFreq(60); 
+  board.setPWMFreq(60); // Set the frequency to 60 Hz for the servos
 }
-
 void loop() {
-  server.handleClient();
+  // Check if data is available from the Bluetooth client
+  if (SerialBT.available()) {
+    String received = readBluetoothData();  // Call function to read the data safely
+    if (received.length() > 0) {
+      // Serial.println("Received: " + received);
+    }
+  }
+  float volts = analogRead(2) * 0.0008056640625; // value from sensor * (3.3/4096)
+  int distance_cm = 29.988 * pow( volts, -1.173);
+  if (distance_cm < 90){
+    int ang;
+    int ang = map(ang, 0, 180, servoArchMin, servoArchMax);
+    int pulse = angleToPulse(ang);
+    board.setPWM(servoToe, 0, pulse);
+  }
+  delay(100);  // Short delay to avoid flooding the serial output
+}
+int angleToPulse(int ang) {
+  return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)
 }
 
-int angleToPulse(int ang) {
-  return map(ang, 0, 180, SERVOMIN, SERVOMAX);
+String readBluetoothData() {
+  String data = "";
+  while (SerialBT.available()) {
+    char c = SerialBT.read();
+    if (c == '\n') break;  // Stop reading if newline is received
+    data += c;
+  }
+  return data;
 }
+
