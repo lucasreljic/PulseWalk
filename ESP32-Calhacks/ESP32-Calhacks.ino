@@ -22,7 +22,7 @@ Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
 #define maxStepHeight 20
 
 #define minForward  6
-#define maxForward  30
+#define maxForward  60
 
 #define leftServo 15
  #define rightServo 8
@@ -43,10 +43,10 @@ int servoArchMin = 90;
 
 int servoArchMax = 120;
 //sensorPin, hapticPin, board, minValue, maxValue, minDistance, maxDistance, direction
-SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, minForward, maxForward, -1);
+SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, minForward, maxForward, 1);
 
-SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, minWalkHeight, maxWalkHeight, -1);
-SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 90, 120, minWalkHeight, maxWalkHeight, -1);
+SensorHaptic servoArch = SensorHaptic(4, 0, &board, 90, 120, minWalkHeight, maxWalkHeight, -1);
+SensorHaptic servoHeel = SensorHaptic(15, 2, &board, 90, 120, minWalkHeight, maxWalkHeight, -1);
 
 SensorHaptic hapticArch = SensorHaptic(4, 33, NULL, 130, 255, minStepHeight, maxStepHeight, 1);
 SensorHaptic hapticHeel = SensorHaptic(15, 32, NULL, 135, 255, minStepHeight, maxStepHeight, 1);
@@ -89,32 +89,31 @@ String parseDirections(String directions){
   }
 
   void parseGps(String value){
-    int servo;
+    int servo = rightServo;
     int angle;
     char direction = value[0];
-    int distance  = value.substring(2).toInt();
+    int distance  = value.substring(1, value.length()).toInt();
     //int flip = 1;
+ Serial.print("distance:");
+            Serial.print(distance);
+            Serial.print("direction:");
+            Serial.println(direction);
+    if(direction = 'r'){
+      angle = 30;
+    }
+    else{
+      servo = leftServo;
+      angle = 125;
+    }
 
-  if(direction = 'r'){
-    servo = rightServo;
-    angle = 30;
-  }
-  else{
-    servo = leftServo;
-    angle = 125;
-  }
-
-  for(int i = 0; i < distance; ++i){
-    int pulse = map(angle,0,180,SERVOMIN,SERVOMAX);
-        
-       
-       board.setPWM(servo, 0, pulse);
-     delay(0.4);
-      board.setPWM(servo, 0, map(90,0,180,SERVOMIN,SERVOMAX));
-  }
-
-  
-
+    for(int i = 0; i < distance; ++i){
+      int pulse = map(angle,0,180,SERVOMIN,SERVOMAX);
+          
+        board.setPWM(servo, 0, pulse);
+        delay(200);
+        board.setPWM(servo, 0, map(90,0,180,SERVOMIN,SERVOMAX));
+        delay(200);
+    }
 
   }
     
@@ -158,7 +157,7 @@ void loop() {
         }
        }
      if(isNum){
-      //Serial.println("This is a number fam"+ received);
+      Serial.println("This is a number fam"+ received);
         if(received.length() > 0){
           //Serial.println("This is the length" + received.length());
         int angle = received.toInt();
@@ -186,5 +185,5 @@ void loop() {
  servoHeel.update();
  hapticHeel.update(true);
  
- delay(100);  // Short delay to avoid flooding the serial output
+ delay(50);  // Short delay to avoid flooding the serial output
 }

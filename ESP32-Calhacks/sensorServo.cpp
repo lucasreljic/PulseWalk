@@ -71,18 +71,18 @@ class SensorHaptic {
 
         void update(bool isVibration = 0){
             int distance = getMovingAvg(readSensor());
-            Serial.print("distance:");
-            Serial.print(distance);
-            Serial.print("pin:");
+            // Serial.print("distance:");
+            // Serial.print(distance);
+            // Serial.print("pin:");
             int  value = map(distance, minDistance, maxDistance, (direction ==1) ? minValue: maxValue, (direction ==1) ? maxValue: minValue);
             value = (value < minValue) ? minValue: (value > maxValue) ? maxValue: value;
-            Serial.print(this-> sensorPin);
+            // Serial.print(this-> sensorPin);
 
-            Serial.print("value:");
-            Serial.println(value);
+            // Serial.print("value:");
+            // Serial.println(value);
             if (isVibration){
-                Serial.print("hapticvalue:");
-                Serial.println(value);
+                // Serial.print("hapticvalue:");
+                // Serial.println(value);
                 if (value < minValue + 1) {
                   value = 0;
                 }
