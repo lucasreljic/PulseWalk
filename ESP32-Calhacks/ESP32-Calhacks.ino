@@ -2,6 +2,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #include "BluetoothSerial.h" // Bluetooth Serial library for ESP32
 #include "sensorServo.cpp"
+#include <Pairs.h>
 BluetoothSerial SerialBT;     // Create a Bluetooth Serial object
 
 Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
@@ -33,6 +34,8 @@ String readBluetoothData() {
   return data;
 }
 
+
+
 int servoArchMin = 90;
 
 int servoArchMax = 120;
@@ -47,6 +50,36 @@ SensorHaptic hapticHeel = SensorHaptic(15, 32, NULL, 135, 255, minStepHeight, ma
 
 int testServo = 8;
 
+string parseDirections(string directions){
+  string answer = "";
+  string number = "";
+  bool findingDirection = true;
+  bool appendingNumber = false;
+  directions = directions.toLowerCase();
+  for(int i = 0; i < directions.length(); ++i){
+    if(findingDirection){
+      if(directions[i]  == 'r' && i+ 5 < directions.length()){
+          if(directions.subString(i,i+5) == "right"){
+            answer += 'r';
+            findingDirection = false;
+          }
+      }
+      else if(directions[i]  == 'l' && i+ 4 < directions.length()){
+          if(directions.subString(i,i+4) == "left"){
+              answer += 'l';
+              findingDirection = false;
+          }
+        }
+      }
+      if(isDigit(directions[i])){
+        do{
+          number += directions[i++]
+        }while(isDigit(directions[i]) && i < directions.length())
+      }
+    }
+    return  answer + number;
+  }
+    
 
 void setup() {
   Serial.begin(115200);
@@ -64,7 +97,7 @@ void setup() {
   hapticHeel.calibrate();
   
 }
- unsigned long previousMicros = 0;
+ 
 void loop() {
   // Check if data is available from the Bluetooth client
   if (SerialBT.available()) {
