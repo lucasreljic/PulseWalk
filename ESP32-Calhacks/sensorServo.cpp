@@ -2,7 +2,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #define SERVOMIN  125 // Minimum pulse length count (out of 4096)
 #define SERVOMAX  575 // Maximum pulse length count (out of 4096)
-#define WINDOW_SIZE 10
+#define WINDOW_SIZE 8
 #define UPPER_LIMIT 800
 class SensorHaptic {
     private:
