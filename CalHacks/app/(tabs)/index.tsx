@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TextInput, Button, Text, ScrollView, Alert } from 'react-native';
+import BLEConnection from '@/components/BLEConnection';
 import MapView, { Marker } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
 import axios from 'axios'; // Use Axios for sending data
 import { ThemedView } from '@/components/ThemedView';
+const origin = {latitude: 37.3318456, longitude: -122.0296002};
+const destination = {latitude: 37.771707, longitude: -122.4053769};
+
+const config = require('./config.js');
 
 
 const App = () => {
@@ -40,19 +45,28 @@ const App = () => {
   const handleDestinationChange = async () => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${destination}&key=${GOOGLE_MAPS_APIKEY}`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${destination}&key=AIzaSyCcV-LGTK6oh-d4wGwrUIXnUqsOt0qT42M`
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
       const data = await response.json();
+      console.log(data);
       const location = data.results[0].geometry.location;
       setDestinationCoords({
         latitude: location.lat,
         longitude: location.lng,
       });
+      console.log(region);
 
       const directionsResponse = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${region.latitude},${region.longitude}&destination=${location.lat},${location.lng}&mode=walking&key=${GOOGLE_MAPS_APIKEY}`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=Disneyland&destination=Universal+Studios+Hollywood&key=AIzaSyCcV-LGTK6oh-d4wGwrUIXnUqsOt0qT42M`
       );
+      if (!directionsResponse.ok) {
+        throw new Error(`HTTP error! Status: ${directionsResponse.status}`);
+    }
       const directionsData = await directionsResponse.json();
+      
       const routeSteps = directionsData.routes[0].legs[0].steps;
       setSteps(routeSteps);
       setCurrentStepIndex(0); // Reset to the first step
@@ -128,7 +142,7 @@ const App = () => {
 
   return (
     <View style={styles.container}>
-      {location && (
+      {/* {location && (
         <MapView
           style={styles.map}
           region={region}
@@ -140,15 +154,25 @@ const App = () => {
             <MapViewDirections
               origin={{ latitude: location.latitude, longitude: location.longitude }}
               destination={destinationCoords}
-              apikey={GOOGLE_MAPS_APIKEY}
+              apikey={config.GOOGLE_MAPS_APIKEY}
               strokeWidth={4}
               strokeColor="blue"
             />
           </>
         )}
         </MapView>
-      )}
-
+      )} */}
+      {/* <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: 37.78825,
+            longitude: -122.4324,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+          showsUserLocation={true}
+        ></MapView> */}
+        
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -158,8 +182,7 @@ const App = () => {
         />
        <Button title="Get Directions" onPress={handleDestinationChange} />
       </View>
-
-      {/* Display the next step */}
+      {/* <BLEConnection /> */}
       {steps.length > 0 && currentStepIndex < steps.length && (
         <View style={styles.directionContainer}>
           <Text style={styles.directionText}>
@@ -178,6 +201,8 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+    height: 10,
+    width: 10,
   },
   inputContainer: {
     position: 'absolute',
