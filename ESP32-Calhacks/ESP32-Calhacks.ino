@@ -28,10 +28,10 @@ int servoArchMin = 90;
 
 int servoArchMax = 120;
 
-SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 90, 120, 0, 40, 1);
+SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 100, 150, 0, 40, -1);
 SensorHaptic hapticHeel = SensorHaptic(15, 12, NULL, 135, 255, 40, 100, 1);
 SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, 0, 50, -1);
-SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, 0, 40, 1);
+SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, 0, 40, -1);
 SensorHaptic hapticArch = SensorHaptic(4, 32, NULL, 135, 255, 40, 100, 1);
 
 int testServo = 8;
@@ -95,7 +95,7 @@ void loop() {
  hapticHeel.update(true);
  hapticArch.update(true);
  
- delay(150);  // Short delay to avoid flooding the serial output
+ delay(50);  // Short delay to avoid flooding the serial output
 }
 int angleToPulse(int ang) {
  return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)
