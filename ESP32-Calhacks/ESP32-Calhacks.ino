@@ -2,7 +2,7 @@
 #include <Adafruit_PWMServoDriver.h>
 #include "BluetoothSerial.h" // Bluetooth Serial library for ESP32
 #include "sensorServo.cpp"
-#include <Pairs.h>
+
 BluetoothSerial SerialBT;     // Create a Bluetooth Serial object
 
 Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
@@ -23,6 +23,9 @@ Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
 
 #define minForward  6
 #define maxForward  30
+
+#define leftServo 15
+ #define rightServo 8
 
 String readBluetoothData() {
   String data = "";
@@ -48,24 +51,29 @@ SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 90, 120, minWalkHeight, max
 SensorHaptic hapticArch = SensorHaptic(4, 33, NULL, 130, 255, minStepHeight, maxStepHeight, 1);
 SensorHaptic hapticHeel = SensorHaptic(15, 32, NULL, 135, 255, minStepHeight, maxStepHeight, 1);
 
-int testServo = 8;
+//int testServo = 8;
 
-string parseDirections(string directions){
-  string answer = "";
-  string number = "";
+int angleToPulse(int ang) {
+ return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)
+}
+
+String parseDirections(String directions){
+  String answer = "";
+  String number = "";
   bool findingDirection = true;
   bool appendingNumber = false;
-  directions = directions.toLowerCase();
-  for(int i = 0; i < directions.length(); ++i){
+//  for(char c: directions)
+ directions.toLowerCase();
+  for(int i = 0; i < directions.length(); i++){
     if(findingDirection){
-      if(directions[i]  == 'r' && i+ 5 < directions.length()){
-          if(directions.subString(i,i+5) == "right"){
+      if(directions.charAt(i)  == 'r' && (i+ 5) < (directions.length())){
+          if(directions.substring(i,i+5) == "right"){
             answer += 'r';
             findingDirection = false;
           }
       }
-      else if(directions[i]  == 'l' && i+ 4 < directions.length()){
-          if(directions.subString(i,i+4) == "left"){
+      else if(directions.charAt(i)  == 'l' && (i+ 4) < ((directions.length()))){
+          if(directions.substring(i,i+4) == "left"){
               answer += 'l';
               findingDirection = false;
           }
@@ -73,11 +81,41 @@ string parseDirections(string directions){
       }
       if(isDigit(directions[i])){
         do{
-          number += directions[i++]
-        }while(isDigit(directions[i]) && i < directions.length())
+          number += directions[i++];
+        }while(isDigit(directions[i]) && i < directions.length());
       }
     }
     return  answer + number;
+  }
+
+  void parseGps(String value){
+    int servo;
+    int angle;
+    char direction = value[0];
+    int distance  = value.substring(2).toInt();
+    //int flip = 1;
+
+  if(direction = 'r'){
+    servo = rightServo;
+    angle = 30;
+  }
+  else{
+    servo = leftServo;
+    angle = 125;
+  }
+
+  for(int i = 0; i < distance; ++i){
+    int pulse = map(angle,0,180,SERVOMIN,SERVOMAX);
+        
+       
+       board.setPWM(servo, 0, pulse);
+     delay(0.4);
+      board.setPWM(servo, 0, map(90,0,180,SERVOMIN,SERVOMAX));
+  }
+
+  
+
+
   }
     
 
@@ -95,6 +133,8 @@ void setup() {
   servoHeel.calibrate();
   servoArch.calibrate();
   hapticHeel.calibrate();
+
+  parseGps("r10");
   
 }
  
@@ -126,18 +166,18 @@ void loop() {
         int pulse = map(angle,0,180,SERVOMIN,SERVOMAX);
         
        
-       board.setPWM(testServo, 0, pulse);
+      // board.setPWM(testServo, 0, pulse);
         }
         
      }
     }
   }
-  distance_cm = servoToe.readSensor();
+  int distance_cm = servoToe.readSensor();
   if (distance_cm < 90){
     int ang = 0;
     ang = map(ang, 0, 180, servoArchMin, servoArchMax);
     int pulse = angleToPulse(ang);
-    board.setPWM(servoToe, 0, pulse);
+    board.setPWM(2, 0, pulse);
   }
 
  servoToe.update();
@@ -147,7 +187,4 @@ void loop() {
  hapticHeel.update(true);
  
  delay(100);  // Short delay to avoid flooding the serial output
-}
-int angleToPulse(int ang) {
- return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)
 }
