@@ -10,6 +10,19 @@ Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
 #define SERVOMAX  575 // Maximum pulse length count (out of 4096)
 
 
+#define pulseCycle 2000
+#define shortPulse 900
+#define longPulse 2100
+
+String readBluetoothData() {
+  String data = "";
+  while (SerialBT.available()) {
+    char c = SerialBT.read();
+    if (c == '\n') break;  // Stop reading if newline is received
+    data += c;
+  }
+  return data;
+}
 
 int servoArchMin = 90;
 
@@ -21,9 +34,12 @@ SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, 0, 50, -1);
 SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, 0, 40, 1);
 SensorHaptic hapticArch = SensorHaptic(4, 33, NULL, 130, 255, 40, 200, 1);
 
+int testServo = 8;
+
 
 void setup() {
   Serial.begin(115200);
+
   SerialBT.begin("ESP32_ServoControl"); // Bluetooth name you will see when connecting
   Serial.println("Bluetooth device is ready to pair");
 
@@ -37,12 +53,39 @@ void setup() {
   hapticHeel.calibrate();
   
 }
+ unsigned long previousMicros = 0;
 void loop() {
   // Check if data is available from the Bluetooth client
   if (SerialBT.available()) {
     String received = readBluetoothData();  // Call function to read the data safely
     if (received.length() > 0) {
-      // Serial.println("Received: " + received);
+       Serial.println("Received: " + received);
+       bool isNum = true;
+
+      // received[received.length()-1] = '\0';
+
+       for(int i = 0; i < received.length();){
+        if(!isdigit(received[i])){
+          received.remove(i,1);
+//          isNum = false;
+//          break;
+        }
+        else{++i;
+        }
+       }
+     if(isNum){
+      Serial.println("This is a number fam"+ received);
+        if(received.length() > 0){
+          Serial.println("This is the length" + received.length());
+        int angle = received.toInt();
+        constrain(angle,0,180);
+        int pulse = map(angle,0,180,SERVOMIN,SERVOMAX);
+        
+       
+       board.setPWM(testServo, 0, pulse);
+        }
+        
+     }
     }
   }
   // float volts = analogRead(2) * 0.0008056640625; // value from sensor * (3.3/4096)
@@ -53,24 +96,13 @@ void loop() {
   //   int pulse = angleToPulse(ang);
   //   board.setPWM(servoToe, 0, pulse);
   // }
-  servoHeel.update();
-  servoToe.update();
-  servoArch.update();
-  hapticHeel.update(true);
-  
-  delay(100);  // Short delay to avoid flooding the serial output
+//  servoHeel.update();
+//  servoToe.update();
+//  servoArch.update();
+//  hapticHeel.update(true);
+//  
+//  delay(100);  // Short delay to avoid flooding the serial output
+//}
+//int angleToPulse(int ang) {
+//  return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)
 }
-int angleToPulse(int ang) {
-  return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)
-}
-
-String readBluetoothData() {
-  String data = "";
-  while (SerialBT.available()) {
-    char c = SerialBT.read();
-    if (c == '\n') break;  // Stop reading if newline is received
-    data += c;
-  }
-  return data;
-}
-
