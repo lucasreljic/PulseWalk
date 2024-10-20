@@ -42,11 +42,19 @@ int servoArchMax = 120;
 //sensorPin, hapticPin, board, minValue, maxValue, minDistance, maxDistance, direction
 SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, minForward, maxForward, -1);
 
+<<<<<<< HEAD
 SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, minWalkHeight, maxWalkHeight, 1);
 SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 90, 120, minWalkHeight, maxWalkHeight, 1);
 
 SensorHaptic hapticArch = SensorHaptic(4, 33, NULL, 130, 255, minStepHeight, maxStepHeight, 1);
 SensorHaptic hapticHeel = SensorHaptic(15, 32, NULL, 135, 255, minStepHeight, maxStepHeight, 1);
+=======
+SensorHaptic servoHeel = SensorHaptic(15, 0, &board, 100, 150, 0, 40, -1);
+SensorHaptic hapticHeel = SensorHaptic(15, 12, NULL, 135, 255, 40, 100, 1);
+SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, 0, 50, -1);
+SensorHaptic servoArch = SensorHaptic(4, 2, &board, 90, 120, 0, 40, -1);
+SensorHaptic hapticArch = SensorHaptic(4, 32, NULL, 135, 255, 40, 100, 1);
+>>>>>>> 49bb8dbd93dadfd9ff0dd54314cc822510d64ed4
 
 int testServo = 8;
 
@@ -132,6 +140,7 @@ void loop() {
      }
     }
   }
+<<<<<<< HEAD
   distance_cm = servoToe.readSensor();
   if (distance_cm < 90){
     int ang = 0;
@@ -147,6 +156,19 @@ void loop() {
  hapticHeel.update(true);
  
  delay(100);  // Short delay to avoid flooding the serial output
+=======
+
+ servoHeel.update();
+ servoToe.update();
+ servoArch.update();
+ hapticHeel.update(true);
+ hapticArch.update(true);
+ 
+ delay(50);  // Short delay to avoid flooding the serial output
+}
+int angleToPulse(int ang) {
+ return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)
+>>>>>>> 49bb8dbd93dadfd9ff0dd54314cc822510d64ed4
 }
 int angleToPulse(int ang) {
  return map(ang, 0, 180, SERVOMIN, SERVOMAX); // Map angle (0-180) to pulse (SERVOMIN-SERVOMAX)

@@ -6,8 +6,6 @@ import * as Location from 'expo-location';
 import axios from 'axios'; // Use Axios for sending data
 import { ThemedView } from '@/components/ThemedView';
 
-// Replace with your actual Google Maps API key
-const GOOGLE_MAPS_APIKEY = 'AIzaSyArJHVcOUTGnya6ADZwv5ZNqa-cORKW2Zw';  
 
 const App = () => {
   const [location, setLocation] = useState(null);
