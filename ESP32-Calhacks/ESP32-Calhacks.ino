@@ -16,10 +16,10 @@ Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40);
 #define longPulse 2100
 
 #define minWalkHeight 1
-#define maxWalkHeight 12
+#define maxWalkHeight 17
 
-#define minStepHeight 12
-#define maxStepHeight 20
+#define minStepHeight 22
+#define maxStepHeight 30
 
 #define minForward  6
 #define maxForward  60
@@ -43,13 +43,13 @@ int servoArchMin = 90;
 
 int servoArchMax = 120;
 //sensorPin, hapticPin, board, minValue, maxValue, minDistance, maxDistance, direction
-SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 120, minForward, maxForward, 1);
+SensorHaptic servoToe = SensorHaptic(2, 1, &board, 90, 135, minForward, maxForward, 1);
 
-SensorHaptic servoArch = SensorHaptic(4, 0, &board, 90, 120, minWalkHeight, maxWalkHeight, -1);
-SensorHaptic servoHeel = SensorHaptic(15, 2, &board, 90, 120, minWalkHeight, maxWalkHeight, -1);
+SensorHaptic servoArch = SensorHaptic(4, 0, &board, 85, 120, minWalkHeight, maxWalkHeight, -1);
+SensorHaptic servoHeel = SensorHaptic(15, 2, &board, 86, 120, minWalkHeight, maxWalkHeight, -1);
 
-SensorHaptic hapticArch = SensorHaptic(4, 33, NULL, 130, 255, minStepHeight, maxStepHeight, 1);
-SensorHaptic hapticHeel = SensorHaptic(15, 32, NULL, 135, 255, minStepHeight, maxStepHeight, 1);
+SensorHaptic hapticArch = SensorHaptic(4, 32, NULL, 130, 255, minStepHeight, maxStepHeight, 1);
+SensorHaptic hapticHeel = SensorHaptic(15, 12, NULL, 135, 255, minStepHeight, maxStepHeight, 1);
 
 //int testServo = 8;
 
@@ -60,33 +60,26 @@ int angleToPulse(int ang) {
 String parseDirections(String directions){
   String answer = "";
   String number = "";
-  bool findingDirection = true;
-  bool appendingNumber = false;
-//  for(char c: directions)
- directions.toLowerCase();
-  for(int i = 0; i < directions.length(); i++){
-    if(findingDirection){
-      if(directions.charAt(i)  == 'r' && (i+ 5) < (directions.length())){
-          if(directions.substring(i,i+5) == "right"){
-            answer += 'r';
-            findingDirection = false;
-          }
-      }
-      else if(directions.charAt(i)  == 'l' && (i+ 4) < ((directions.length()))){
-          if(directions.substring(i,i+4) == "left"){
-              answer += 'l';
-              findingDirection = false;
-          }
-        }
-      }
-      if(isDigit(directions[i])){
-        do{
-          number += directions[i++];
-        }while(isDigit(directions[i]) && i < directions.length());
-      }
-    }
-    return  answer + number;
+  directions.toLowerCase();
+
+  if(directions.indexOf("right") != -1){
+    answer += "r";
   }
+  else if(directions.indexOf("left") != -1){
+    answer += "l";
+  }
+  bool foundNumber = false;
+  for(int i = 0; i< directions.length();++i){
+    if(isDigit(directions[i])){
+      foundNumber = true;
+      number += directions[i];
+    }
+    else if (foundNumber){
+      break;
+    }
+  }
+  return answer + number;
+}
 
   void parseGps(String value){
     int servo = rightServo;
@@ -98,12 +91,12 @@ String parseDirections(String directions){
             Serial.print(distance);
             Serial.print("direction:");
             Serial.println(direction);
-    if(direction = 'r'){
-      angle = 30;
+    if(direction == 'r'){
+      angle = 145;
     }
     else{
       servo = leftServo;
-      angle = 125;
+      angle = 20;
     }
 
     for(int i = 0; i < distance; ++i){
@@ -133,7 +126,7 @@ void setup() {
   servoArch.calibrate();
   hapticHeel.calibrate();
 
-  parseGps("r10");
+  parseGps("r2");
   
 }
  
@@ -142,42 +135,25 @@ void loop() {
   if (SerialBT.available()) {
     String received = readBluetoothData();  // Call function to read the data safely
     if (received.length() > 0) {
-       Serial.println("Received: " + received);
-       bool isNum = true;
-
-      // received[received.length()-1] = '\0';
-
-       for(int i = 0; i < received.length();){
-        if(!isdigit(received[i])){
-          received.remove(i,1);
-//          isNum = false;
-//          break;
-        }
-        else{++i;
-        }
-       }
-     if(isNum){
-      Serial.println("This is a number fam"+ received);
-        if(received.length() > 0){
-          //Serial.println("This is the length" + received.length());
-        int angle = received.toInt();
-        constrain(angle,0,180);
-        int pulse = map(angle,0,180,SERVOMIN,SERVOMAX);
+       //Serial.println("Received: " + received);
+        Serial.println(parseDirections(received));
+        parseGps(parseDirections(received));
+        
+        received = "";
         
        
       // board.setPWM(testServo, 0, pulse);
-        }
         
-     }
+    
     }
   }
-  int distance_cm = servoToe.readSensor();
-  if (distance_cm < 90){
-    int ang = 0;
-    ang = map(ang, 0, 180, servoArchMin, servoArchMax);
-    int pulse = angleToPulse(ang);
-    board.setPWM(2, 0, pulse);
-  }
+  // int distance_cm = servoToe.readSensor();
+  // if (distance_cm < 90){
+  //   int ang = 0;
+  //   ang = map(ang, 0, 180, servoArchMin, servoArchMax);
+  //   int pulse = angleToPulse(ang);
+  //   board.setPWM(2, 0, pulse);
+  // }
 
  servoToe.update();
  servoArch.update();
